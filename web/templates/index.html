@@ -33,8 +33,9 @@
           <svg class="price-chart" viewBox="0 0 680 260" role="img" aria-label="กราฟจำนวนข้อเสนอแบ่งตามช่วงราคาและร้านค้า">
             <defs><pattern id="dotGrid" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#d9dbe6"/></pattern></defs>
             <rect x="0" y="20" width="680" height="220" fill="url(#dotGrid)" opacity=".72"/><path d="M 32 220 H 648" class="chart-axis"/>
-            {% for line in chart_lines %}<path d="{{ line.path }}" fill="none" stroke="{{ line.color }}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>{% for point in line.points %}<circle cx="{{ point[0] }}" cy="{{ point[1] }}" r="5" fill="#f8f9fd" stroke="{{ line.color }}" stroke-width="3"/>{% endfor %}{% endfor %}
+            {% for line in chart_lines %}<path d="{{ line.path }}" fill="none" stroke="{{ line.color }}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>{% for point in line.points %}<g class="chart-point" tabindex="0" data-source="{{ line.source|upper }}" data-range="{{ chart_ranges[loop.index0] }}" data-count="{{ line.counts[loop.index0] }}" data-average="{{ '{:,}'.format(line.averages[loop.index0]) if line.averages[loop.index0] is not none else '' }}"><circle cx="{{ point[0] }}" cy="{{ point[1] }}" r="16" fill="transparent"/><circle class="chart-dot" cx="{{ point[0] }}" cy="{{ point[1] }}" r="5" fill="#f8f9fd" stroke="{{ line.color }}" stroke-width="3"/></g>{% endfor %}{% endfor %}
           </svg>
+          <div class="chart-tooltip" role="tooltip" hidden><strong class="tip-heading"></strong><span class="tip-average"></span><span class="tip-count"></span></div>
           <div class="chart-labels">{% for label in chart_labels %}<span>{{ label }}</span>{% endfor %}</div>
           <div class="chart-legend">{% for line in chart_lines %}<span><i style="background:{{ line.color }}"></i>{{ line.source|upper }}</span>{% endfor %}</div>
           {% else %}<p class="empty-state">ยังไม่มีข้อมูลสำหรับแสดงกราฟ</p>{% endif %}</div>
@@ -60,5 +61,35 @@
   </div>
   <footer>Notebook Price Observatory · ราคา ณ เวลาที่ดึงจากร้านค้า อาจเปลี่ยนแปลงได้</footer>
 </div>
+<script>
+  const chart = document.querySelector('.price-chart');
+  const tooltip = document.querySelector('.chart-tooltip');
+  if (chart && tooltip) {
+    const heading = tooltip.querySelector('.tip-heading');
+    const average = tooltip.querySelector('.tip-average');
+    const count = tooltip.querySelector('.tip-count');
+    const hide = () => { tooltip.hidden = true; };
+    const show = (point) => {
+      heading.textContent = point.dataset.source + ' · ' + point.dataset.range;
+      average.textContent = point.dataset.average ? 'ราคาเฉลี่ย ฿' + point.dataset.average : 'ไม่มีรายการในช่วงนี้';
+      count.textContent = point.dataset.count + ' ข้อเสนอ';
+      tooltip.hidden = false;
+      const rect = point.getBoundingClientRect();
+      const left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2;
+      tooltip.style.left = Math.max(10, Math.min(left, window.innerWidth - tooltip.offsetWidth - 10)) + 'px';
+      tooltip.style.top = (rect.top > tooltip.offsetHeight + 22 ? rect.top - tooltip.offsetHeight - 10 : rect.bottom + 10) + 'px';
+    };
+    chart.addEventListener('pointermove', (event) => {
+      const point = event.target.closest('.chart-point');
+      point ? show(point) : hide();
+    });
+    chart.addEventListener('pointerleave', hide);
+    chart.addEventListener('focusin', (event) => {
+      const point = event.target.closest('.chart-point');
+      if (point) show(point);
+    });
+    chart.addEventListener('focusout', hide);
+  }
+</script>
 </body>
 </html>
