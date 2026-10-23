@@ -2,7 +2,7 @@
 
 ระบบรวบรวมและเปรียบเทียบราคาโน้ตบุ๊ก Windows ราคา 15,000–40,000 บาท จากร้านค้าออนไลน์ในประเทศไทย สำหรับข้อสอบวิชา 02739452
 
-ผู้จัดทำ: นายธีรพงศ์ กลิ่นฟุ้ง · ลำดับที่จอง 12 · รหัสนิสิต 6621600925 · หมู่ 700
+ผู้จัดทำ: นายธีรพงศ์ กลิ่นฟุ้ง · ลำดับที่ 12 · รหัสนิสิต 6621600925 · หมู่ 700
 
 GitHub: [02739452-12-6621600925](https://github.com/Theerapong25/02739452-12-6621600925)
 
@@ -58,9 +58,4 @@ SELECT source, COUNT(*) FROM notebook_offers GROUP BY source ORDER BY source;
 SELECT source, product_name, price_baht, model_key FROM notebook_offers ORDER BY price_baht LIMIT 20;
 SELECT * FROM notebook_pipeline_runs ORDER BY finished_at DESC LIMIT 5;
 ```
-
-## รายงาน
-
-- [PDF สำหรับส่งสอบ](output/pdf/12_6621600925_summary.pdf)
-- [Word สำหรับแก้ไขเพิ่มเติม](output/word/12_6621600925_summary.docx)
 
