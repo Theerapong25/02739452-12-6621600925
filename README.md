@@ -1,13 +1,9 @@
 # Notebook Price Observatory
 
 ระบบรวบรวมและเปรียบเทียบราคาโน้ตบุ๊ก Windows ราคา 15,000–40,000 บาท จากร้านค้าออนไลน์ในประเทศไทย สำหรับข้อสอบวิชา 02739452
-
 ผู้จัดทำ: นายธีรพงศ์ กลิ่นฟุ้ง รหัสนิสิต 6621600925 หมู่ 700
 
-ลำดับที่จอง: 12 · [GitHub repository](https://github.com/Theerapong25/02739452-12-6621600925)
-
 ## แหล่งข้อมูล
-
 1. [Advice Notebook Price List](https://www.advice.co.th/nescen-n053/product/pricelist?cate=notebooks)
 2. [JIB Price List](https://www.jib.co.th/web/pricelist/pricelist_main)
 3. [Mercular Notebook](https://www.mercular.com/computer/laptop)
