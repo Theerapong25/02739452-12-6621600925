@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from urllib.parse import urljoin
@@ -13,8 +14,15 @@ from bs4 import BeautifulSoup
 USER_AGENT = "NotebookPriceResearch/1.0 (educational project; public product listings)"
 SOURCES = {
     "advice": "https://www.advice.co.th/nescen-n053/product/pricelist?cate=notebooks",
-    "jib": "https://www.jib.co.th/web/pricelist/pricelist_main",
+    "jib": "https://www.jib.co.th/web/product/product_list/2/25",
     "mercular": "https://www.mercular.com/computer/laptop",
+}
+SOURCE_PAGES = {
+    "jib": [
+        "https://www.jib.co.th/web/product/product_list/2/25",
+        "https://www.jib.co.th/web/product/product_list/2/1338",
+        "https://www.jib.co.th/web/product/product_list/2/1468",
+    ]
 }
 
 
@@ -57,6 +65,22 @@ def parse_advice(html: str, fetched_at: str) -> list[Listing]:
 def parse_jib(html: str, fetched_at: str) -> list[Listing]:
     soup = BeautifulSoup(html, "html.parser")
     out = []
+    for card in soup.select(".divboxpro"):
+        link = card.find("a", href=re.compile(r"/readProduct/\d+"))
+        price_node = card.select_one(".price_total")
+        if not link or not price_node:
+            continue
+        name = link.get("title") or link.get_text(" ", strip=True)
+        if "NOTEBOOK" not in name.upper() and "โน้ตบุ๊ค" not in name:
+            continue
+        match = re.search(r"/readProduct/(\d+)", link["href"])
+        price = parse_price(price_node.get_text(" ", strip=True))
+        if match and price:
+            out.append(Listing("jib", match.group(1), name, price, link["href"],
+                               card.get_text(" ", strip=True)[:500], fetched_at))
+    if out:
+        return out
+    # Legacy price-list layout remains supported as a fallback.
     for row in soup.select("#table_price tbody tr"):
         cells = row.find_all("td", recursive=False)
         if len(cells) < 6:
@@ -112,13 +136,23 @@ def fetch_source(source: str) -> tuple[list[Listing], dict]:
     robots_response.raise_for_status()
     robot = RobotFileParser()
     robot.parse(robots_response.text.splitlines())
-    if not robot.can_fetch(USER_AGENT, url):
-        raise PermissionError(f"robots.txt disallows {url}")
-    response = session.get(url, timeout=35)
-    response.raise_for_status()
+    pages = SOURCE_PAGES.get(source, [url])
     fetched_at = datetime.now(timezone.utc).isoformat()
-    rows = PARSERS[source](response.text, fetched_at)
+    rows_by_id = {}
+    page_results = []
+    for index, page in enumerate(pages):
+        if not robot.can_fetch(USER_AGENT, page):
+            raise PermissionError(f"robots.txt disallows {page}")
+        if index:
+            time.sleep(1)
+        response = session.get(page, timeout=35)
+        response.raise_for_status()
+        parsed = PARSERS[source](response.text, fetched_at)
+        page_results.append({"url": page, "count": len(parsed), "http_status": response.status_code})
+        for row in parsed:
+            rows_by_id[row.source_id] = row
+    rows = list(rows_by_id.values())
     if not rows:
         raise ValueError(f"No products parsed from {source}; HTML may have changed")
-    return rows, {"source": source, "url": url, "http_status": response.status_code,
+    return rows, {"source": source, "url": url, "pages": page_results,
                   "fetched_at": fetched_at, "count": len(rows)}

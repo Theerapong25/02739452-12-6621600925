@@ -149,6 +149,13 @@ def load_postgres(run_key: str, merged: dict) -> dict:
             confirmed = cur.fetchone()[0]
             if confirmed != len(offers):
                 raise ValueError(f"PostgreSQL validation failed: {confirmed} vs {len(offers)}")
+            # A successful scrape is a complete snapshot for that source.
+            for source in merged["source_counts"]:
+                current_ids = [x["source_id"] for x in offers if x["source"] == source]
+                cur.execute("DELETE FROM notebook_offers WHERE source = %s AND NOT (source_id = ANY(%s))",
+                            (source, current_ids))
+            cur.execute("DELETE FROM notebook_products p WHERE NOT EXISTS "
+                        "(SELECT 1 FROM notebook_offers o WHERE o.model_key = p.model_key)")
     write_run_status(run_key, merged, "SUCCESS", f"Saved {len(offers)} offers from {len(merged['source_counts'])} sources")
     return {"confirmed": confirmed, "models": merged["model_count"]}
 

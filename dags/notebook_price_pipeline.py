@@ -40,7 +40,9 @@ def notebook_price_comparison():
             rows, meta = fetch_source(source)
             filename = DATA_DIR / run_key / f"{source}.json"
             filename.write_text(json.dumps([x.to_dict() for x in rows], ensure_ascii=False), encoding="utf-8")
-            LOG.info("EXTRACT %s: %s listings; HTTP %s", source, len(rows), meta["http_status"])
+            LOG.info("EXTRACT %s: %s listings across %s page(s); HTTP %s",
+                     source, len(rows), len(meta["pages"]),
+                     [page["http_status"] for page in meta["pages"]])
             return {"source": source, "ok": True, "count": len(rows), "file": str(filename), "meta": meta}
         except Exception as exc:
             # A single source failure does not stop the remaining sources.
