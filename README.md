@@ -2,22 +2,14 @@
 
 ระบบรวบรวมและเปรียบเทียบราคาโน้ตบุ๊ก Windows ราคา 15,000–40,000 บาท จากร้านค้าออนไลน์ในประเทศไทย สำหรับข้อสอบวิชา 02739452
 
-ผู้จัดทำ: นายธีรพงศ์ กลิ่นฟุ้ง รหัสนิสิต 6621600925 หมู่ 700
-
-ลำดับที่จอง: 12 · [GitHub repository](https://github.com/Theerapong25/02739452-12-6621600925)
+ผู้จัดทำ: นายธีรพงศ์ กลิ่นฟุ้ง  เลขที่ 12 รหัสนิสิต 6621600925 หมู่ 700 
 
 ## แหล่งข้อมูล
-
 1. [Advice Notebook Price List](https://www.advice.co.th/nescen-n053/product/pricelist?cate=notebooks)
 2. [JIB Notebook](https://www.jib.co.th/web/product/product_list/2/25), [Gaming](https://www.jib.co.th/web/product/product_list/2/1338), [Ultrathin](https://www.jib.co.th/web/product/product_list/2/1468)
 3. [Mercular Notebook](https://www.mercular.com/computer/laptop)
 
-หน้าเว็บทั้งสามแสดงชื่อสินค้าและราคาแบบสาธารณะ ตัวดึงข้อมูลตรวจ `robots.txt` ก่อนเข้าหน้าเว็บทุกครั้ง ไม่ใช้ Selenium ไม่ดึงข้อมูลส่วนบุคคลหรือรูปภาพ Advice และ Mercular ดึงหน้ารายการแหล่งละหนึ่งหน้า ส่วน JIB ดึงสามหมวดย่อยโดยเว้น 1 วินาทีระหว่างหน้า
-
-> แหล่งที่สามเปลี่ยนเป็น Mercular หลังตรวจว่าหน้า invadeIT ที่เปิดด้วย HTTP ปกติยังไม่มีรายการสินค้าใน HTML ที่ส่งกลับ จึงเลือกหน้า Mercular ที่มีข้อมูลจริงและตรวจสอบได้ หากโพสต์จองหัวข้อระบุ invadeIT ไว้ ให้แก้แหล่งที่สามในโพสต์/แจ้งอาจารย์ตามกติกาการจอง
-
 ## เปิดใช้งาน
-
 ต้องมี Docker Desktop เปิดอยู่ ใน PowerShell ที่โฟลเดอร์นี้รัน:
 
 ```powershell
@@ -63,6 +55,3 @@ SELECT source, product_name, price_baht, model_key FROM notebook_offers ORDER BY
 SELECT * FROM notebook_pipeline_runs ORDER BY finished_at DESC LIMIT 5;
 ```
 
-## สิ่งที่ต้องส่งตามข้อสอบ
-
-ส่ง [repo นี้](https://github.com/Theerapong25/02739452-12-6621600925) แบบ public และไฟล์ [12_6621600925_summary.pdf](output/pdf/12_6621600925_summary.pdf) ทาง Classroom ก่อน 16:00 น. ห้ามอัปโหลด `.env`, `data/` หรือ `research/`
