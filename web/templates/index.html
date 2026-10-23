@@ -1,34 +1,64 @@
 <!doctype html>
 <html lang="th">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="120">
   <title>Notebook Price Observatory</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<div class="shell">
-  <header class="topbar"><div class="mark">N<span>●</span></div><div class="toptext"><strong>Notebook Price Observatory</strong><small>เปรียบเทียบราคาโน้ตบุ๊กจากหลายร้าน</small></div><div class="live"><i></i> LIVE DATA · POSTGRESQL</div></header>
-  <main>
-    <div class="hero"><div><p class="eyebrow">02739452 · DATA PIPELINE EXAM</p><h1>ราคาโน้ตบุ๊ก<br><em>ในมุมมองเดียว</em></h1><p class="lead">สำรวจสินค้าและเปรียบเทียบข้อเสนอจากร้านค้าออนไลน์ไทย ข้อมูลอัปเดตจาก Apache Airflow</p></div><div class="hero-side"><span>แหล่งข้อมูล</span><strong>Advice · JIB · Mercular</strong><small>ราคาเป็นบาท · ช่วง 15,000–40,000</small></div></div>
-    {% if not ready %}<div class="notice">ยังไม่มีข้อมูล เปิด Airflow แล้วรัน DAG <b>notebook_price_comparison</b> เพื่อเริ่มแสดงผล</div>{% endif %}
-    <section class="kpis">
-      <div class="kpi"><span>ข้อเสนอทั้งหมด</span><strong>{{ '{:,}'.format(kpi.offers or 0) }}</strong><small>รายการจากร้านค้า</small></div>
-      <div class="kpi"><span>รุ่นไม่ซ้ำ</span><strong>{{ '{:,}'.format(kpi.models or 0) }}</strong><small>จับคู่ตามรหัสรุ่น</small></div>
-      <div class="kpi"><span>ร้านค้าที่มีข้อมูล</span><strong>{{ kpi.sources or 0 }}</strong><small>แหล่งข้อมูลที่สำเร็จ</small></div>
-      <div class="kpi"><span>ราคาต่ำสุด</span><strong>฿{{ '{:,}'.format(kpi.minimum or 0) }}</strong><small>ราคาเฉลี่ย ฿{{ '{:,}'.format((kpi.average or 0)|int) }}</small></div>
+<div class="dashboard-shell">
+  <header class="app-header">
+    <div class="identity"><div class="logo" aria-hidden="true">◈</div><div><strong>Notebook Price Observatory</strong><small>ภาพรวมราคาโน้ตบุ๊กจากร้านค้าออนไลน์ไทย</small></div></div>
+    <form class="header-search" method="get" role="search"><span aria-hidden="true">⌕</span><input type="search" name="search" value="{{ search }}" placeholder="ค้นหารุ่นหรือชื่อสินค้า" aria-label="ค้นหารุ่นหรือชื่อสินค้า"><button>ค้นหา</button></form>
+    <div class="connection"><i></i> PostgreSQL connected</div>
+  </header>
+  {% if not ready %}<div class="notice">ยังไม่มีข้อมูล เปิด Airflow แล้วรัน DAG <strong>notebook_price_comparison</strong> เพื่อเริ่มแสดงผล</div>{% endif %}
+  <div class="workspace-grid">
+    <main class="main-area">
+      <section class="overview-cards" aria-label="ภาพรวมข้อมูล">
+        <article class="source-card">
+          <div class="card-top"><div><p class="card-label">แหล่งข้อมูล</p><h1>ราคาทุกร้าน<br>ในมุมมองเดียว</h1></div><span class="round-icon">↗</span></div>
+          <div class="source-orbit"><div class="orbit-ring"><strong>{{ kpi.sources or 0 }}</strong><small>/ 3 ร้าน</small></div></div>
+          <div class="source-chips"><span>Advice</span><span>JIB</span><span>Mercular</span></div>
+          <p class="source-caption">ข้อมูลจาก Airflow · ราคา 15,000–40,000 บาท</p>
+        </article>
+        <article class="metric-card metric-coral"><div class="metric-top"><span>ข้อเสนอทั้งหมด</span><span class="metric-icon">▤</span></div><div><strong>{{ '{:,}'.format(kpi.offers or 0) }}</strong><p>รายการจากร้านค้า</p></div></article>
+        <article class="metric-card metric-blue"><div class="metric-top"><span>รุ่นไม่ซ้ำ</span><span class="metric-icon">◇</span></div><div><strong>{{ '{:,}'.format(kpi.models or 0) }}</strong><p>จับคู่ตามรหัสรุ่น</p></div></article>
+      </section>
+      <section class="insight-strip" aria-label="สรุปราคา"><div class="strip-start"><span class="strip-symbol">฿</span><div><strong>ราคาต่ำสุด ฿{{ '{:,}'.format(kpi.minimum or 0) }}</strong><small>จากรายการที่ตรงกับตัวกรอง</small></div></div><div class="strip-average"><span>ราคาเฉลี่ย</span><strong>฿{{ '{:,}'.format((kpi.average or 0)|int) }}</strong></div></section>
+      <section class="chart-section" aria-labelledby="chart-title">
+        <div class="section-title"><div><p class="section-kicker">PRICE DISTRIBUTION</p><h2 id="chart-title">จำนวนข้อเสนอตามช่วงราคา</h2><p class="subtle">เปรียบเทียบจำนวนรายการในแต่ละช่วงราคาตามร้านค้า</p></div><span class="range-pill">15,000–40,000 บาท ⌄</span></div>
+        <div class="chart-wrap">{% if chart_lines %}
+          <svg class="price-chart" viewBox="0 0 680 260" role="img" aria-label="กราฟจำนวนข้อเสนอแบ่งตามช่วงราคาและร้านค้า">
+            <defs><pattern id="dotGrid" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#d9dbe6"/></pattern></defs>
+            <rect x="0" y="20" width="680" height="220" fill="url(#dotGrid)" opacity=".72"/><path d="M 32 220 H 648" class="chart-axis"/>
+            {% for line in chart_lines %}<path d="{{ line.path }}" fill="none" stroke="{{ line.color }}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>{% for point in line.points %}<circle cx="{{ point[0] }}" cy="{{ point[1] }}" r="5" fill="#f8f9fd" stroke="{{ line.color }}" stroke-width="3"/>{% endfor %}{% endfor %}
+          </svg>
+          <div class="chart-labels">{% for label in chart_labels %}<span>{{ label }}</span>{% endfor %}</div>
+          <div class="chart-legend">{% for line in chart_lines %}<span><i style="background:{{ line.color }}"></i>{{ line.source|upper }}</span>{% endfor %}</div>
+          {% else %}<p class="empty-state">ยังไม่มีข้อมูลสำหรับแสดงกราฟ</p>{% endif %}</div>
+      </section>
+    </main>
+    <aside class="sidebar" aria-label="ข้อมูลเพิ่มเติม">
+      <section class="side-section"><div class="side-heading"><div><p class="section-kicker">LATEST RUNS</p><h2>การทำงานล่าสุด</h2></div><span class="side-icon">▣</span></div>
+        <div class="run-list">{% for x in runs %}<div class="run-row"><div class="run-date"><span>{{ x.finished_at.strftime('%d/%m/%Y') }}</span><strong>{{ x.finished_at.strftime('%H:%M') }} UTC</strong></div><div class="run-info"><strong>รันล่าสุด #{{ loop.index }}</strong><small>{{ x.accepted_count }} ข้อเสนอ · {{ x.model_count }} รุ่น</small></div><span class="run-indicator {{ 'is-success' if x.status=='SUCCESS' else 'is-failed' }}" title="{{ x.status }}">{{ '✓' if x.status=='SUCCESS' else '!' }}</span></div>{% else %}<p class="empty-state">ยังไม่มีการรัน</p>{% endfor %}</div>
+        <a class="side-link" href="http://localhost:8090" target="_blank" rel="noopener noreferrer">เปิด Apache Airflow <span>↗</span></a>
+      </section>
+      <section class="side-section brand-side"><div class="side-heading"><div><p class="section-kicker">BRAND MIX</p><h2>แบรนด์ที่พบมาก</h2><p class="subtle">จำนวนข้อเสนอตามตัวกรองปัจจุบัน</p></div></div>
+        <div class="brand-list">{% for x in brands[:6] %}<div class="brand-row"><span>{{ x.label }}</span><div class="brand-track"><div class="brand-fill" style="width:{{ (x.count/max_count*100)|round|int }}%"></div></div><strong>{{ x.count }}</strong></div>{% else %}<p class="empty-state">ยังไม่มีข้อมูล</p>{% endfor %}</div>
+      </section>
+    </aside>
+  </div>
+  <div class="content-area">
+    <section class="filter-panel" aria-labelledby="filter-title"><div class="section-title"><div><p class="section-kicker">EXPLORE</p><h2 id="filter-title">ค้นหาและกรองข้อมูล</h2></div><span class="small-note">อ่านจาก PostgreSQL โดยตรง</span></div>
+      <form method="get" class="filter-form"><label><span>รุ่นหรือชื่อสินค้า</span><input name="search" value="{{ search }}" placeholder="เช่น ASUS Vivobook"></label><label><span>ร้านค้า</span><select name="source"><option value="">ทุกร้าน</option>{% for x in sources %}<option value="{{ x }}" {% if source==x %}selected{% endif %}>{{ x|upper }}</option>{% endfor %}</select></label><label><span>แบรนด์</span><select name="brand"><option value="">ทุกแบรนด์</option>{% for x in brand_options %}<option value="{{ x }}" {% if brand==x %}selected{% endif %}>{{ x }}</option>{% endfor %}</select></label><label><span>ราคาต่ำสุด</span><input type="number" name="min_price" value="{{ min_price }}" placeholder="15,000"></label><label><span>ราคาสูงสุด</span><input type="number" name="max_price" value="{{ max_price }}" placeholder="40,000"></label><button type="submit">แสดงผล</button><a class="reset-link" href="/">ล้างตัวกรอง</a></form>
     </section>
-    <section class="filters panel"><div class="section-head"><div><p class="eyebrow">EXPLORE</p><h2>ค้นหาและกรองข้อมูล</h2></div><span>ข้อมูลจากฐานข้อมูลโดยตรง</span></div>
-      <form method="get"><input name="search" placeholder="ค้นหารุ่นหรือชื่อสินค้า" value="{{ search }}"><select name="source"><option value="">ทุกร้าน</option>{% for x in sources %}<option value="{{ x }}" {% if source==x %}selected{% endif %}>{{ x|upper }}</option>{% endfor %}</select><select name="brand"><option value="">ทุกแบรนด์</option>{% for x in brand_options %}<option value="{{ x }}" {% if brand==x %}selected{% endif %}>{{ x }}</option>{% endfor %}</select><input type="number" name="min_price" placeholder="ราคาต่ำสุด" value="{{ min_price }}"><input type="number" name="max_price" placeholder="ราคาสูงสุด" value="{{ max_price }}"><button>แสดงผล</button><a class="clear" href="/">ล้างตัวกรอง</a></form>
-    </section>
-    <div class="two-col">
-      <section class="panel"><div class="section-head"><div><p class="eyebrow">BRAND MIX</p><h2>จำนวนข้อเสนอตามแบรนด์</h2></div></div><div class="bars">{% for x in brands %}<div class="bar-row"><span>{{ x.label }}</span><div class="bar-track"><div class="bar-fill" style="width:{{ (x.count/max_count*100)|round|int }}%"></div></div><b>{{ x.count }}</b></div>{% else %}<p class="muted">ยังไม่มีข้อมูล</p>{% endfor %}</div></section>
-      <section class="panel"><div class="section-head"><div><p class="eyebrow">PRICE COMPARISON</p><h2>รุ่นที่พบหลายร้าน</h2></div></div><div class="comparison">{% for x in comparisons %}<div class="comparison-row"><div><strong>{{ x.model_key }}</strong><small>{{ x.source_count }} ร้าน · ส่วนต่าง ฿{{ '{:,}'.format(x.gap) }}</small></div><b>฿{{ '{:,}'.format(x.cheapest) }}</b></div>{% else %}<p class="muted">ยังไม่พบรหัสรุ่นตรงกันข้ามร้าน</p>{% endfor %}</div></section>
-    </div>
-    <section class="panel table-panel"><div class="section-head"><div><p class="eyebrow">PRODUCT LIST</p><h2>รายการโน้ตบุ๊ก</h2></div><span>แสดง 100 รายการแรก เรียงจากราคาต่ำ</span></div><div class="table-scroll"><table><thead><tr><th>รุ่นสินค้า</th><th>แบรนด์</th><th>ร้านค้า</th><th>ราคา</th><th>เวลาเก็บข้อมูล</th><th></th></tr></thead><tbody>{% for x in offers %}<tr><td><strong>{{ x.product_name }}</strong><small>{{ x.model_key }}</small></td><td>{{ x.brand }}</td><td><span class="source source-{{ x.source }}">{{ x.source|upper }}</span></td><td class="price">฿{{ '{:,}'.format(x.price_baht) }}</td><td>{{ x.fetched_at.strftime('%d/%m/%Y %H:%M') }} UTC</td><td><a href="{{ x.product_url }}" target="_blank" rel="noopener noreferrer">ดูสินค้า ↗</a></td></tr>{% else %}<tr><td colspan="6" class="muted">ไม่พบรายการตามเงื่อนไข</td></tr>{% endfor %}</tbody></table></div></section>
-    <section class="panel status"><div class="section-head"><div><p class="eyebrow">PIPELINE HEALTH</p><h2>สถานะการดึงและบันทึกข้อมูล</h2></div></div><div class="table-scroll"><table><thead><tr><th>เวลาจบ</th><th>สถานะ</th><th>ข้อมูลผ่านตรวจ</th><th>รุ่น</th><th>แหล่งข้อมูล / ข้อผิดพลาด</th></tr></thead><tbody>{% for x in runs %}<tr><td>{{ x.finished_at.strftime('%d/%m/%Y %H:%M') }} UTC</td><td><span class="pill {{ 'success' if x.status=='SUCCESS' else 'failure' }}">{{ x.status }}</span></td><td>{{ x.accepted_count }}</td><td>{{ x.model_count }}</td><td><small>{{ x.raw_counts }}{% if x.source_errors %} · {{ x.source_errors }}{% endif %}</small></td></tr>{% else %}<tr><td colspan="5" class="muted">ยังไม่มีการรัน</td></tr>{% endfor %}</tbody></table></div></section>
-  </main>
-  <footer>Notebook Price Observatory · ข้อมูลราคา ณ เวลาที่ดึงจากแต่ละร้าน อาจเปลี่ยนแปลงได้</footer>
+    <section class="comparison-panel" aria-labelledby="compare-title"><div class="section-title"><div><p class="section-kicker">PRICE COMPARISON</p><h2 id="compare-title">รุ่นที่พบหลายร้าน</h2><p class="subtle">ราคาเริ่มต้นและส่วนต่างของรุ่นเดียวกัน</p></div></div><div class="comparison-grid">{% for x in comparisons %}<div class="comparison-item"><div><strong>{{ x.model_key }}</strong><small>{{ x.source_count }} ร้าน · ต่างกัน ฿{{ '{:,}'.format(x.gap) }}</small></div><span>เริ่ม ฿{{ '{:,}'.format(x.cheapest) }}</span></div>{% else %}<p class="empty-state">ยังไม่พบรหัสรุ่นตรงกันข้ามร้าน</p>{% endfor %}</div></section>
+    <section class="table-panel" aria-labelledby="products-title"><div class="section-title"><div><p class="section-kicker">PRODUCT LIST</p><h2 id="products-title">รายการโน้ตบุ๊ก</h2></div><span class="small-note">100 รายการแรก · เรียงจากราคาต่ำ</span></div><div class="table-scroll"><table><thead><tr><th>รุ่นสินค้า</th><th>แบรนด์</th><th>ร้านค้า</th><th>ราคา</th><th>เวลาเก็บข้อมูล</th><th></th></tr></thead><tbody>{% for x in offers %}<tr><td><strong>{{ x.product_name }}</strong><small>{{ x.model_key }}</small></td><td>{{ x.brand }}</td><td><span class="source-tag source-{{ x.source }}">{{ x.source|upper }}</span></td><td class="table-price">฿{{ '{:,}'.format(x.price_baht) }}</td><td>{{ x.fetched_at.strftime('%d/%m/%Y %H:%M') }} UTC</td><td><a href="{{ x.product_url }}" target="_blank" rel="noopener noreferrer">ดูสินค้า ↗</a></td></tr>{% else %}<tr><td colspan="6" class="empty-state">ไม่พบรายการตามเงื่อนไข</td></tr>{% endfor %}</tbody></table></div></section>
+    <section class="table-panel" aria-labelledby="pipeline-title"><div class="section-title"><div><p class="section-kicker">PIPELINE HEALTH</p><h2 id="pipeline-title">สถานะการดึงและบันทึกข้อมูล</h2></div></div><div class="table-scroll"><table><thead><tr><th>เวลาจบ</th><th>สถานะ</th><th>ข้อมูลผ่านตรวจ</th><th>รุ่น</th><th>แหล่งข้อมูล / ข้อผิดพลาด</th></tr></thead><tbody>{% for x in runs %}<tr><td>{{ x.finished_at.strftime('%d/%m/%Y %H:%M') }} UTC</td><td><span class="status-tag {{ 'success' if x.status=='SUCCESS' else 'failure' }}">{{ x.status }}</span></td><td>{{ x.accepted_count }}</td><td>{{ x.model_count }}</td><td class="json-cell">{{ x.raw_counts }}{% if x.source_errors %} · {{ x.source_errors }}{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="empty-state">ยังไม่มีการรัน</td></tr>{% endfor %}</tbody></table></div></section>
+  </div>
+  <footer>Notebook Price Observatory · ราคา ณ เวลาที่ดึงจากร้านค้า อาจเปลี่ยนแปลงได้</footer>
 </div>
-</body></html>
+</body>
+</html>
