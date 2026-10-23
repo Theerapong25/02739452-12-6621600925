@@ -1,0 +1,12 @@
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.ps1 text eol=crlf
+*.html text eol=lf
+*.css text eol=lf
+*.cjs text eol=lf
+Dockerfile text eol=lf
+*.pdf binary
+*.png binary

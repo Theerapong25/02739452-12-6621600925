@@ -1,0 +1,79 @@
+name: notebook-price-exam
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-55437}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  airflow-init:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: &airflow_env
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY:-exam-demo-local-secret}
+      DB_HOST: postgres
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      PYTHONPATH: /opt/airflow/project
+    volumes: &airflow_volumes
+      - ./dags:/opt/airflow/dags:ro
+      - ./scraper.py:/opt/airflow/project/scraper.py:ro
+      - ./pipeline.py:/opt/airflow/project/pipeline.py:ro
+      - ./data:/opt/airflow/data
+    command: >
+      bash -c "airflow db migrate &&
+      airflow users create --username '${AIRFLOW_ADMIN_USER}' --password '${AIRFLOW_ADMIN_PASSWORD}'
+      --firstname Demo --lastname Student --role Admin --email demo@example.local || true"
+  airflow-webserver:
+    build: .
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    environment: *airflow_env
+    volumes: *airflow_volumes
+    command: webserver
+    ports:
+      - "127.0.0.1:${AIRFLOW_PORT:-8090}:8080"
+    restart: unless-stopped
+  airflow-scheduler:
+    build: .
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    environment: *airflow_env
+    volumes: *airflow_volumes
+    command: scheduler
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8502}:8502"
+    restart: unless-stopped
+volumes:
+  postgres_data:

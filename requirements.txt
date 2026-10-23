@@ -1,0 +1,8 @@
+apache-airflow==2.10.5
+beautifulsoup4==4.15.0
+requests==2.32.3
+psycopg2-binary==2.9.10
+Flask==3.1.1
+gunicorn==23.0.0
+reportlab==4.4.9
+Pillow==12.3.0
