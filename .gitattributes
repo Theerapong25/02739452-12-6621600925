@@ -9,4 +9,5 @@
 *.cjs text eol=lf
 Dockerfile text eol=lf
 *.pdf binary
+*.docx binary
 *.png binary
